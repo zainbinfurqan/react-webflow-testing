@@ -57,7 +57,6 @@ function App() {
         console.log("style",style)
         if(!style) {
           style = webflow.createStyle(name);
-          console.log("style",style)
           style.setProperties(properties)
         }
         return style
