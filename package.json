@@ -12,10 +12,13 @@
     "@types/react-dom": "^18.2.17",
     "@webflow/designer-extension-typings": "^0.1.11",
     "@webflow/webflow-cli": "^1.6.4",
+    "axios": "^1.6.2",
     "concurrently": "^8.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-oauth": "^0.0.1",
     "react-scripts": "5.0.1",
+    "salesforce-oauth2": "^0.2.0",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },

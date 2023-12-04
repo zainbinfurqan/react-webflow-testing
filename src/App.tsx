@@ -1,89 +1,84 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import { componentConstruction } from './utils/components';
+import React, { useEffect, useState } from 'react'
 
+export default function App() {
 
-const styles =[{
-  name: 'btn-01',
-  properties: {
-    'background-color': 'red',
-    'padding-top': '2rem',
-    'padding-bottom': '2rem',
-    'padding-left': '2rem',
-    'padding-right': '2rem',
-    'color':'white'
-  }
-},
-// {
-//   name: 'is-active',
-//   properties: {
-//     'background-color': 'green',
-//   }
-// }
-]
+  const [isLogin,setIsLogin] = useState(false)
+  const [isWebFlowAuthenticated,setIsWebFlowAuthenticated] = useState(false)
 
-const attributes =[
-  {
-    name: 'type',
-    value: 'button'
-  }
-]
-
-function App() {
-
-  const handleClick = async () => {
-    const selectedElement = await webflow.getSelectedElement()
-    if(!selectedElement) {
-      await webflow.notify({
-        type:'Error',
-        message:'Please select an element'
-      })
-      return;
+  useEffect(()=> {
+    const isLoggedIn = window.localStorage.getItem('weblow-nextjs');
+    if(isLoggedIn){
+      Object.keys(isLoggedIn).length> 0 &&  setIsLogin(true)
     }
-    if(!selectedElement?.children){
-      await webflow.notify({
-        type:'Error',
-        message:'the selected element cannot have childrens'
-      })
-      return;
+    const url_1 = window.location.href.split('?')
+    console.log(url_1)
+    if(url_1.length>1 &&  url_1[1].split('=')[0] === 'code'){
+      const url_2 = url_1[1].split('=')[1];
+    (async () => {
+      await fetchAccessToken(url_2)
+    })()
     }
-    const children = selectedElement.getChildren()
+})
 
-//-------------------start different styles for single element-------------------//
-    const elmStyles = await Promise.all(
-      (styles || []).map(async ({name,properties}) => {
-        let style = await webflow.getStyleByName(name);
-        console.log("style",style)
-        if(!style) {
-          style = webflow.createStyle(name);
-          style.setProperties(properties)
+  const fetchAccessToken = async (code: string) => {
+    try {
+      const response = await fetch('https://api.webflow.com/oauth/access_token',{
+        method:'POST',
+        body: JSON.stringify({
+          client_id: '',
+          code,
+          grant_type: 'authorization_code'
+        }),
+        headers: {
+          "Content-type": "application/json"
         }
-        return style
       })
-    )
-//-------------------end different styles for single element-------------------//
-    
+      const res = await response.json()
+      console.log(res)
+    } catch (error) {
+      console.log({error})
+    }
+   
+  }
 
-
-//----------------------------adding children----------------------------//
-    selectedElement.setChildren([...children, 
-      componentConstruction.button({
-        title:'click me new one',
-        className:'btn-01', 
-        shouldInlcudeRandomNumberToClassName:false,
-        styles: elmStyles,
-        attributes
+  const login = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/login',{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: 'user' +  Math.floor(Math.random() * 100000),
+          browserUniqeId: Math.floor(Math.random() * 100000),
+        })
       })
-      ]);
-    await selectedElement.save()
+      const res = await response.json();
+      window.localStorage.setItem('weblow-nextjs', JSON.stringify({
+        userId: res.newAuth.user,
+        token: res.newAuth.tokens,
+        browserUniqeId:res.newUser.browserUniqeId
+      }))
+      setIsLogin (true)
+    } catch (error) {
+      
+    }
+  }
+
+  const navigateSaleforceAuth = () => {
+    window.location.replace('https://drive-nosoftware-8736.my.salesforce.com/services/oauth2/authorize?client_id=&redirect_uri=https://926f-2404-160-8173-a298-6ce1-d19-376a-bbd.ngrok-free.app&response_type=code')
+  }
+
+  const navigateToWebFlowAuth = () => {
+    window.location.replace('https://webflow.com/oauth/authorize?client_id=&response_type=code')
   }
 
   return (
-    <div className="App">
-     <button onClick={handleClick}>Click me</button>
-    </div>
-  );
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      {!isLogin && <button type="button" onClick={login} className="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800">Login</button>}
+      {isLogin && <button type="button" onClick={navigateToWebFlowAuth} className="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800">Authorize With Webflow</button>}
+      {<button type="button" onClick={navigateSaleforceAuth} className="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm dark:focus:ring-offset-gray-800">Authorize With Saleforce</button>}
+    
+    </main>
+  )
 }
-
-export default App;
